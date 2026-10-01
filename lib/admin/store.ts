@@ -8,11 +8,15 @@ export type ProjectStatus = 'building' | 'live';
 export type Project = {
   id: string;
   name: string;
+  tagline: string;
   summary: string;
   href: string;
+  image: string;
   status: ProjectStatus;
   createdAt: string;
 };
+
+export type ProjectInput = Omit<Project, 'id' | 'createdAt'>;
 
 type OtpRecord = {
   hash: string;
@@ -74,16 +78,25 @@ export async function listProjects() {
   if (!redisConfigured()) {
     if (process.env.VERCEL) return [];
     const store = await readFileStore();
-    return store.projects.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+    return store.projects.map(normalizeProject).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
   }
 
   const raw = await redis(['GET', 'projects']);
   if (typeof raw !== 'string' || !raw) return [];
   const projects = JSON.parse(raw) as Project[];
-  return projects.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  return projects.map(normalizeProject).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 }
 
-export async function addProject(input: Omit<Project, 'id' | 'createdAt'>) {
+function normalizeProject(project: Project): Project {
+  return {
+    ...project,
+    tagline: project.tagline ?? '',
+    image: project.image ?? '',
+    href: project.href ?? '',
+  };
+}
+
+export async function addProject(input: ProjectInput) {
   const project: Project = {
     ...input,
     id: randomUUID(),
@@ -91,6 +104,16 @@ export async function addProject(input: Omit<Project, 'id' | 'createdAt'>) {
   };
   const projects = await listProjects();
   projects.unshift(project);
+  await saveProjects(projects);
+  return project;
+}
+
+export async function updateProject(id: string, input: ProjectInput) {
+  const projects = await listProjects();
+  const index = projects.findIndex((project) => project.id === id);
+  if (index < 0) return null;
+  const project: Project = { ...projects[index], ...input, id, createdAt: projects[index].createdAt };
+  projects[index] = project;
   await saveProjects(projects);
   return project;
 }

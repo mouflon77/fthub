@@ -5,14 +5,43 @@ import type { Project } from '@/lib/admin/store';
 
 type Step = 'email' | 'code' | 'ready';
 
+async function readImageFile(file: File) {
+  const source = await createImageBitmap(file);
+  const max = 1400;
+  const scale = Math.min(1, max / Math.max(source.width, source.height));
+  const width = Math.max(1, Math.round(source.width * scale));
+  const height = Math.max(1, Math.round(source.height * scale));
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('Could not read that image.');
+  context.drawImage(source, 0, 0, width, height);
+  source.close();
+  const data = canvas.toDataURL('image/jpeg', 0.72);
+  if (data.length > 900_000) throw new Error('That image is too large. Use a smaller screenshot.');
+  return data;
+}
+
+function hostOf(href: string) {
+  try {
+    return new URL(href).host.replace(/^www\./, '');
+  } catch {
+    return '';
+  }
+}
+
 export default function AdminPage() {
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [projects, setProjects] = useState<Project[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState('');
+  const [tagline, setTagline] = useState('');
   const [summary, setSummary] = useState('');
   const [href, setHref] = useState('');
+  const [image, setImage] = useState('');
   const [status, setStatus] = useState<'building' | 'live'>('building');
   const [message, setMessage] = useState('');
   const [pending, setPending] = useState(false);
@@ -35,6 +64,27 @@ export default function AdminPage() {
       ignore = true;
     };
   }, []);
+
+  function resetForm() {
+    setEditingId(null);
+    setName('');
+    setTagline('');
+    setSummary('');
+    setHref('');
+    setImage('');
+    setStatus('building');
+  }
+
+  function editProject(project: Project) {
+    setEditingId(project.id);
+    setName(project.name);
+    setTagline(project.tagline);
+    setSummary(project.summary);
+    setHref(project.href);
+    setImage(project.image);
+    setStatus(project.status);
+    setMessage('');
+  }
 
   async function requestCode(event: FormEvent) {
     event.preventDefault();
@@ -78,14 +128,25 @@ export default function AdminPage() {
     }
   }
 
-  async function createProject(event: FormEvent) {
+  async function onImage(file: File | undefined) {
+    if (!file) return;
+    setMessage('');
+    try {
+      setImage(await readImageFile(file));
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not read that image.');
+    }
+  }
+
+  async function saveProject(event: FormEvent) {
     event.preventDefault();
     setPending(true);
     setMessage('');
+    const payload = { id: editingId, name, tagline, summary, href, image, status };
     const response = await fetch('/api/admin/projects', {
-      method: 'POST',
+      method: editingId ? 'PATCH' : 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, summary, href, status }),
+      body: JSON.stringify(payload),
     });
     const data = (await response.json()) as { error?: string; project?: Project };
     setPending(false);
@@ -93,11 +154,10 @@ export default function AdminPage() {
       setMessage(data.error ?? 'The project could not be saved.');
       return;
     }
-    setProjects((current) => [data.project!, ...current]);
-    setName('');
-    setSummary('');
-    setHref('');
-    setStatus('building');
+    setProjects((current) =>
+      editingId ? current.map((project) => (project.id === data.project!.id ? data.project! : project)) : [data.project!, ...current],
+    );
+    resetForm();
   }
 
   async function deleteProject(id: string) {
@@ -106,7 +166,9 @@ export default function AdminPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),
     });
-    if (response.ok) setProjects((current) => current.filter((project) => project.id !== id));
+    if (!response.ok) return;
+    setProjects((current) => current.filter((project) => project.id !== id));
+    if (editingId === id) resetForm();
   }
 
   async function logout() {
@@ -114,6 +176,7 @@ export default function AdminPage() {
     setStep('email');
     setCode('');
     setProjects([]);
+    resetForm();
   }
 
   return (
@@ -170,19 +233,23 @@ export default function AdminPage() {
             <>
               <div className="admin-bar">
                 <p>{email}</p>
-                <button className="btn btn-link" type="button" onClick={logout}>
+                <button className="admin-text" type="button" onClick={logout}>
                   Log out
                 </button>
               </div>
 
-              <form className="admin-form" onSubmit={createProject}>
+              <form className="admin-form" onSubmit={saveProject}>
                 <label className="field">
                   Name
                   <input required value={name} onChange={(event) => setName(event.target.value)} />
                 </label>
                 <label className="field">
+                  Tagline
+                  <input value={tagline} onChange={(event) => setTagline(event.target.value)} />
+                </label>
+                <label className="field">
                   Summary
-                  <textarea required rows={3} value={summary} onChange={(event) => setSummary(event.target.value)} />
+                  <textarea required rows={4} value={summary} onChange={(event) => setSummary(event.target.value)} />
                 </label>
                 <label className="field">
                   Link
@@ -194,31 +261,57 @@ export default function AdminPage() {
                   />
                 </label>
                 <label className="field">
+                  Site image
+                  <input type="file" accept="image/*" onChange={(event) => onImage(event.target.files?.[0])} />
+                </label>
+                {image ? (
+                  <div className="admin-preview">
+                    <img src={image} alt="" />
+                    <button className="admin-text" type="button" onClick={() => setImage('')}>
+                      Remove image
+                    </button>
+                  </div>
+                ) : null}
+                <label className="field">
                   Status
                   <select value={status} onChange={(event) => setStatus(event.target.value as 'building' | 'live')}>
                     <option value="building">Building</option>
                     <option value="live">Live</option>
                   </select>
                 </label>
-                <button className="btn btn-primary" type="submit" disabled={pending}>
-                  {pending ? 'Saving' : 'Add project'}
-                  <span className="btn-chip" aria-hidden="true">
-                    →
-                  </span>
-                </button>
+                <div className="admin-form-actions">
+                  <button className="btn btn-primary" type="submit" disabled={pending}>
+                    {pending ? 'Saving' : editingId ? 'Save changes' : 'Add project'}
+                    <span className="btn-chip" aria-hidden="true">
+                      →
+                    </span>
+                  </button>
+                  {editingId ? (
+                    <button className="admin-text" type="button" onClick={resetForm}>
+                      Cancel
+                    </button>
+                  ) : null}
+                </div>
               </form>
 
               <ul className="admin-list">
                 {projects.map((project) => (
-                  <li key={project.id}>
-                    <div>
+                  <li key={project.id} className="admin-project">
+                    {project.image ? <img className="admin-thumb" src={project.image} alt="" /> : <span className="admin-thumb" />}
+                    <div className="admin-project-copy">
                       <strong>{project.name}</strong>
                       <span>{project.status === 'live' ? 'Live' : 'Building'}</span>
+                      {project.href ? <span className="admin-host">{hostOf(project.href)}</span> : null}
                       <p>{project.summary}</p>
                     </div>
-                    <button className="btn btn-link" type="button" onClick={() => deleteProject(project.id)}>
-                      Remove
-                    </button>
+                    <div className="admin-project-actions">
+                      <button className="admin-text" type="button" onClick={() => editProject(project)}>
+                        Edit
+                      </button>
+                      <button className="admin-text admin-remove" type="button" onClick={() => deleteProject(project.id)}>
+                        Remove
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
