@@ -4,7 +4,7 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import { Logo } from './Logo';
 
 /**
- * Building the field is a few hundred thousand vertices of synchronous work,
+ * Building the board is a burst of geometry on first paint,
  * so the wait gets a branded curtain rather than a blank frame.
  */
 export function Loader({ done }: { done: boolean }) {
@@ -34,7 +34,7 @@ export function Loader({ done }: { done: boolean }) {
       <div className="loader-bar">
         <i style={{ '--p': `${progress}%` } as CSSProperties} />
       </div>
-      <span className="loader-text">{done ? 'ready' : 'growing the garden'}</span>
+      <span className="loader-text">{done ? 'ready' : 'routing the board'}</span>
     </div>
   );
 }

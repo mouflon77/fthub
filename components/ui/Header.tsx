@@ -5,7 +5,7 @@ import { nav, site } from '@/lib/site';
 import { ArrowRight } from './Icons';
 import { Logo } from './Logo';
 
-const IDS = nav.map((item) => item.href.replace('#', ''));
+const IDS = ['top', ...nav.map((item) => item.href.replace('#', '')), 'contact'];
 
 export function Header() {
   const [active, setActive] = useState('top');
@@ -53,10 +53,7 @@ export function Header() {
       <div className="header-inner">
         <a className="brand glass" href="#top">
           <Logo className="brand-mark" title={`${site.name} home`} />
-          <span className="brand-name">
-            Frontier Tech Hub
-            <span>Studio · London</span>
-          </span>
+          <span className="brand-name">Frontier Tech Hub</span>
         </a>
 
         <nav className="navpill glass" aria-label="Sections">
@@ -74,7 +71,9 @@ export function Header() {
 
         <a className="btn btn-primary header-cta" href="#contact">
           Get in touch
-          <ArrowRight className="btn-arrow" />
+          <span className="btn-chip" aria-hidden="true">
+            <ArrowRight />
+          </span>
         </a>
       </div>
     </header>

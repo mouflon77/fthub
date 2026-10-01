@@ -1,21 +1,17 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { detectQuality, prefersReducedMotion } from '@/lib/garden/quality';
-import { Backdrop } from './Backdrop';
-import { Beams } from './Beams';
 import { CameraRig } from './CameraRig';
+import { CircuitStage } from './CircuitStage';
 import { Emblem } from './Emblem';
-import { Fireflies } from './Fireflies';
-import { Flowers } from './Flowers';
-import { Grass } from './Grass';
-import { Ground } from './Ground';
+import { IceDome } from './IceDome';
 import { Post } from './Post';
-import { WindDriver } from './WindDriver';
+import { PulseDriver } from './PulseDriver';
+import { Skyline } from './Skyline';
 
-/** Lifts the loading curtain once there is something real behind it. */
 function FirstFrame({ onReady }: { onReady: () => void }) {
   const frames = useRef(0);
   useFrame(() => {
@@ -26,9 +22,6 @@ function FirstFrame({ onReady }: { onReady: () => void }) {
 }
 
 export default function Garden({ onReady }: { onReady: () => void }) {
-  // This module is imported with `ssr: false`, so the real device is already
-  // measurable on the first render and the tier is settled before anything is
-  // built. Nothing here ever runs on the server.
   const [{ quality, motion }] = useState(() => ({
     quality: detectQuality(),
     motion: prefersReducedMotion() ? 0.14 : 1,
@@ -38,22 +31,27 @@ export default function Garden({ onReady }: { onReady: () => void }) {
     <div className="garden" aria-hidden="true">
       <Canvas
         dpr={quality.dpr}
-        camera={{ fov: 42, near: 0.1, far: 200, position: [0, 1.46, 5.6] }}
+        camera={{ fov: 42, near: 0.1, far: 220, position: [0, 1.55, 6.2] }}
         gl={{ antialias: false, alpha: false, powerPreference: 'high-performance', stencil: false }}
         onCreated={({ gl }) => {
           gl.toneMapping = THREE.ACESFilmicToneMapping;
-          gl.toneMappingExposure = 1.05;
+          gl.toneMappingExposure = 1.02;
+          gl.setClearColor('#f7f6f0');
         }}
       >
-        <WindDriver motion={motion} />
+        <PulseDriver motion={motion} />
         <CameraRig />
-        <Backdrop />
-        <Emblem />
-        <Beams count={quality.beams} />
-        <Ground />
-        <Grass count={quality.grass} />
-        <Flowers count={quality.flowers} />
-        <Fireflies count={quality.fireflies} />
+        <IceDome />
+        <Skyline count={quality.towers} />
+        <Suspense fallback={null}>
+          <Emblem />
+        </Suspense>
+        <CircuitStage
+          nodes={quality.nodes}
+          gears={quality.gears}
+          pillars={quality.pillars}
+          chips={quality.chips}
+        />
         {quality.bloom ? <Post smaa={quality.smaa} /> : null}
         <FirstFrame onReady={onReady} />
       </Canvas>

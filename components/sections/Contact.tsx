@@ -1,6 +1,6 @@
 import { contact } from '@/lib/site';
 import { Reveal } from '@/components/ui/Reveal';
-import { Pin } from '@/components/ui/Icons';
+import { ArrowRight, Pin } from '@/components/ui/Icons';
 import { SocialLinks } from '@/components/ui/SocialLinks';
 
 export function Contact() {
@@ -8,18 +8,29 @@ export function Contact() {
     <section className="section" id="contact" aria-labelledby="contact-title">
       <div className="shell">
         <Reveal>
-          <div className="section-head">
+          <div className="section-head section-head-wide">
             <span className="eyebrow">{contact.eyebrow}</span>
             <h2 id="contact-title" className="h2">
               {contact.heading}
             </h2>
+            {contact.paragraphs.map((paragraph) => (
+              <p className="lede" key={paragraph.slice(0, 32)}>
+                {paragraph}
+              </p>
+            ))}
           </div>
         </Reveal>
 
         <Reveal delay={90}>
           <div className="contact-panel glass">
             <div className="contact-pitch">
-              <p className="lede">{contact.lede}</p>
+              <a className="btn btn-primary" href={contact.cta.href} target="_blank" rel="noreferrer noopener">
+                {contact.cta.label}
+                <span className="btn-chip" aria-hidden="true">
+                  <ArrowRight />
+                </span>
+              </a>
+              <p className="contact-note">{contact.note}</p>
             </div>
 
             <div className="contact-rows">

@@ -1,17 +1,17 @@
 'use client';
 
-import { useMemo, useRef } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
+import { useEffect, useMemo, useRef } from 'react';
+import { useFrame, useLoader, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import { skyGLSL } from '@/lib/glsl/sky';
-import { glassGLSL } from '@/lib/glsl/glass';
-import { windUniforms, viewState } from '@/lib/garden/state';
+import { circuitUniforms, viewState } from '@/lib/circuit/state';
 
 const vertexShader = /* glsl */ `
+varying vec2 vUv;
 varying vec3 vNormal;
 varying vec3 vWorld;
 
 void main() {
+  vUv = uv;
   vec4 world = modelMatrix * vec4(position, 1.0);
   vWorld = world.xyz;
   vNormal = normalize(mat3(modelMatrix) * normal);
@@ -20,70 +20,57 @@ void main() {
 `;
 
 const fragmentShader = /* glsl */ `
-${skyGLSL}
-${glassGLSL}
-
-uniform vec3 uTint;
+uniform sampler2D uMap;
+uniform float uTime;
 uniform float uOpacity;
+uniform vec3 uCircuit;
+uniform vec3 uPulse;
 
+varying vec2 vUv;
 varying vec3 vNormal;
 varying vec3 vWorld;
 
 void main() {
+  vec4 tex = texture2D(uMap, vUv);
+  float mask = tex.a;
+  if (mask < 0.04) discard;
+
   vec3 N = normalize(vNormal);
   if (!gl_FrontFacing) N = -N;
   vec3 V = normalize(cameraPosition - vWorld);
+  float ndv = clamp(dot(N, V), 0.0, 1.0);
+  float fres = pow(1.0 - ndv, 2.4);
 
-  float alpha;
-  vec3 col = ftGlass(N, V, uTint, 1.5, 1.4, 1.1, 0.55, 0.035, alpha);
+  // Near-black glass body from the real mark silhouette.
+  vec3 base = vec3(0.04, 0.045, 0.055);
+  vec3 col = mix(base, base * 1.55, fres * 0.55);
 
-  gl_FragColor = vec4(col, alpha * uOpacity);
+  float sweep = 0.5 + 0.5 * sin(vUv.y * 10.0 + uTime * 0.9 + fres * 4.0);
+  vec3 accent = mix(uCircuit, uPulse, sweep);
+  col += accent * fres * 0.9;
+  col += accent * pow(fres, 2.8) * 0.45;
+  col += vec3(0.9, 0.94, 1.0) * pow(ndv, 10.0) * 0.1;
+
+  float alpha = mask * clamp(0.78 + fres * 0.22, 0.6, 0.96) * uOpacity;
+  gl_FragColor = vec4(col, alpha);
 }
 `;
 
-/** One strand of the mark: a capsule outline with a capsule hole. */
-function capsuleRing(width: number, height: number, thickness: number) {
-  const outer = height / 2;
-  const inner = Math.max(0.02, outer - thickness);
-  const straight = width / 2 - outer;
-
-  const trace = (path: THREE.Shape | THREE.Path, radius: number) => {
-    path.moveTo(-straight, -radius);
-    path.lineTo(straight, -radius);
-    path.absarc(straight, 0, radius, -Math.PI / 2, Math.PI / 2, false);
-    path.lineTo(-straight, radius);
-    path.absarc(-straight, 0, radius, Math.PI / 2, Math.PI * 1.5, false);
-  };
-
-  const shape = new THREE.Shape();
-  trace(shape, outer);
-  const hole = new THREE.Path();
-  trace(hole, inner);
-  shape.holes.push(hole);
-  return shape;
-}
-
 /**
- * The Frontier Tech Hub mark rebuilt as cast glass and set far behind the
- * garden, so the brand reads as part of the world rather than an overlay.
+ * Brand mark from the official artwork — textured so the interlocking loops
+ * and centre diamond match the SVG exactly, with a dark glass rim glimmer.
  */
 export function Emblem() {
   const group = useRef<THREE.Group>(null);
   const size = useThree((state) => state.size);
+  const map = useLoader(THREE.TextureLoader, '/brand-mark.png');
 
-  const geometry = useMemo(() => {
-    const geo = new THREE.ExtrudeGeometry(capsuleRing(3.6, 1.94, 0.36), {
-      depth: 0.3,
-      bevelEnabled: true,
-      bevelThickness: 0.07,
-      bevelSize: 0.07,
-      bevelSegments: 2,
-      curveSegments: 22,
-    });
-    geo.translate(0, 0, -0.15);
-    geo.computeVertexNormals();
-    return geo;
-  }, []);
+  useEffect(() => {
+    map.colorSpace = THREE.SRGBColorSpace;
+    map.anisotropy = 8;
+    map.premultiplyAlpha = true;
+    map.needsUpdate = true;
+  }, [map]);
 
   const material = useMemo(
     () =>
@@ -91,38 +78,42 @@ export function Emblem() {
         vertexShader,
         fragmentShader,
         uniforms: {
-          uTint: { value: new THREE.Color('#e8f4ff') },
-          uOpacity: { value: 0.42 },
+          uMap: { value: map },
+          uTime: circuitUniforms.uTime,
+          uOpacity: { value: 0.88 },
+          uCircuit: circuitUniforms.uCircuit,
+          uPulse: circuitUniforms.uPulse,
         },
         transparent: true,
         depthWrite: false,
+        depthTest: false,
         side: THREE.DoubleSide,
       }),
-    [],
+    [map],
   );
 
   const scale = useMemo(() => {
     const aspect = size.width / Math.max(size.height, 1);
-    return 2.15 * THREE.MathUtils.clamp(aspect / 1.6, 0.52, 1);
+    return 5.4 * THREE.MathUtils.clamp(aspect / 1.55, 0.55, 1.05);
   }, [size]);
 
   useFrame((_, delta) => {
     if (!group.current) return;
-    const t = windUniforms.uTime.value;
-    group.current.rotation.y = Math.sin(t * 0.07) * 0.16 + viewState.pointer.x * 0.1;
-    group.current.rotation.x = viewState.pointer.y * -0.05;
-    group.current.position.y = 4.4 + Math.sin(t * 0.19) * 0.07;
+    const t = circuitUniforms.uTime.value;
+    group.current.rotation.y = Math.sin(t * 0.07) * 0.1 + viewState.pointer.x * 0.06;
+    group.current.rotation.x = viewState.pointer.y * -0.03;
+    group.current.position.y = 2.15 + Math.sin(t * 0.19) * 0.05;
 
-    // A hero-only element: it fades out rather than looming behind the copy.
-    const fade = 0.46 * (1 - THREE.MathUtils.clamp(viewState.scroll * 1.5, 0, 1));
+    const fade = 0.88 * (1 - THREE.MathUtils.clamp(viewState.scroll * 1.15, 0, 1));
     const opacity = material.uniforms.uOpacity;
     opacity.value += (fade - opacity.value) * (1 - Math.exp(-4 * Math.min(delta, 1 / 20)));
   });
 
   return (
-    <group ref={group} position={[0, 4.4, -17]} scale={scale}>
-      <mesh geometry={geometry} material={material} rotation={[0, 0, Math.PI / 4]} position={[0, 0, 0.17]} />
-      <mesh geometry={geometry} material={material} rotation={[0, 0, -Math.PI / 4]} position={[0, 0, -0.17]} />
+    <group ref={group} position={[0, 2.15, -7.2]} scale={scale} renderOrder={2}>
+      <mesh material={material}>
+        <planeGeometry args={[1, 1]} />
+      </mesh>
     </group>
   );
 }

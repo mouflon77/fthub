@@ -3,11 +3,11 @@
 import { useMemo } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import { viewState } from '@/lib/garden/state';
+import { viewState } from '@/lib/circuit/state';
 
 /**
  * The camera never zooms with the scroll wheel — scrolling belongs to the page.
- * It leans toward the cursor and pulls back as you read, so the garden recedes
+ * It leans toward the cursor and pulls back as you read, so the board recedes
  * behind the copy rather than fighting it.
  *
  * On a portrait viewport a fixed vertical field of view crops the meadow away
@@ -35,12 +35,12 @@ export function CameraRig() {
 
     wanted.set(
       x * 0.44,
-      1.46 + portrait * 0.34 + y * 0.15 + lift * 0.85,
-      5.6 + portrait * 2.7 + lift * 1.7,
+      1.7 + portrait * 0.4 + y * 0.12 + lift * 0.95,
+      6.4 + portrait * 2.7 + lift * 1.9,
     );
     camera.position.lerp(wanted, 1 - Math.exp(-3.2 * dt));
 
-    target.set(x * 0.18, 0.66 + lift * 0.55, -0.8);
+    target.set(x * 0.18, 0.4 + lift * 0.55, -2.2);
     camera.lookAt(target);
   });
 

@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect } from 'react';
-import { viewState } from '@/lib/garden/state';
+import { viewState } from '@/lib/circuit/state';
 
 /**
  * Single source of scroll truth: the camera rig reads it to pull back, and the
- * veil reads it to frost the garden once copy is on top of it.
+ * veil reads it to frost the board once copy is on top of it.
  */
 export function ScrollSync() {
   useEffect(() => {
