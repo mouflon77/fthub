@@ -1485,6 +1485,148 @@ a.contact-row:hover .contact-value svg {
   transform: translate(-50%, 0);
 }
 
+/* --------------------------------------------------------------------------
+   Admin
+   -------------------------------------------------------------------------- */
+
+.admin {
+  min-height: 100svh;
+  padding: 72px 0 80px;
+}
+
+.admin-card {
+  width: min(520px, 100%);
+  margin-inline: auto;
+  padding: clamp(24px, 4vw, 40px);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.admin-card-wide {
+  width: min(760px, 100%);
+}
+
+.admin-card h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.field input,
+.field textarea,
+.field select {
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--forest);
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-rim-bright);
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.admin-bar,
+.admin-list li {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.admin-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.admin-list li {
+  padding-top: 14px;
+  border-top: 1px solid var(--glass-rim);
+}
+
+.admin-list strong {
+  display: block;
+  color: var(--forest);
+}
+
+.admin-list span {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.admin-list p {
+  margin-top: 6px;
+  color: var(--text-dim);
+}
+
+.admin-message {
+  color: var(--text-dim);
+}
+
+.pipeline {
+  margin-top: 56px;
+}
+
+.pipeline-label {
+  font-size: 0.8125rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 18px;
+}
+
+.pipeline-grid {
+  display: grid;
+  gap: 14px;
+}
+
+@media (min-width: 760px) {
+  .pipeline-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.pipeline-card {
+  padding: 26px 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pipeline-card p,
+.pipeline-card a {
+  color: var(--text-dim);
+  font-size: 0.9375rem;
+}
+
+.pipeline-card a {
+  font-weight: 600;
+  color: var(--forest);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

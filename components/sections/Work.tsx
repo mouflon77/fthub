@@ -3,6 +3,7 @@ import { work } from '@/lib/site';
 import { Reveal } from '@/components/ui/Reveal';
 import { ArrowRight, Spark } from '@/components/ui/Icons';
 import { SocialLinks } from '@/components/ui/SocialLinks';
+import { Pipeline } from './Pipeline';
 
 export function Work() {
   const { product } = work;
@@ -72,6 +73,8 @@ export function Work() {
             </div>
           </article>
         </Reveal>
+
+        <Pipeline />
       </div>
     </section>
   );
