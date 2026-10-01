@@ -1,5 +1,5 @@
 import { readSessionEmail } from '@/lib/admin/auth';
-import { addProject, listProjects, removeProject, updateProject, type ProjectInput, type ProjectStatus } from '@/lib/admin/store';
+import { addProject, listProjects, removeProject, updateProject, type ProjectInput, type ProjectSocial, type ProjectStatus } from '@/lib/admin/store';
 
 async function requireAdmin() {
   const email = await readSessionEmail();
@@ -20,6 +20,7 @@ function readProject(body: {
   href?: string;
   image?: string;
   status?: string;
+  socials?: { kind?: string; href?: string }[];
 } | null): { error: string } | { input: ProjectInput } {
   const name = body?.name?.trim() ?? '';
   const tagline = body?.tagline?.trim() ?? '';
@@ -27,6 +28,7 @@ function readProject(body: {
   const href = body?.href?.trim() ?? '';
   const image = body?.image?.trim() ?? '';
   const status: ProjectStatus = body?.status === 'live' ? 'live' : 'building';
+  const socials: ProjectSocial[] = [];
 
   if (name.length < 2 || name.length > 80) return { error: 'Give the project a name.' };
   if (tagline.length > 140) return { error: 'Keep the tagline shorter.' };
@@ -37,7 +39,17 @@ function readProject(body: {
   }
   if (image.length > 900_000) return { error: 'That image is too large. Use a smaller screenshot.' };
 
-  return { input: { name, tagline, summary, href, image, status } };
+  for (const item of body?.socials ?? []) {
+    const link = item?.href?.trim() ?? '';
+    if (!link) continue;
+    if (item.kind !== 'linkedin' && item.kind !== 'x' && item.kind !== 'telegram') {
+      return { error: 'Choose LinkedIn, X, or Telegram.' };
+    }
+    if (!/^https?:\/\//i.test(link)) return { error: 'Social links should start with https://' };
+    socials.push({ kind: item.kind, href: link });
+  }
+
+  return { input: { name, tagline, summary, href, image, status, socials } };
 }
 
 export async function POST(request: Request) {
@@ -63,6 +75,7 @@ export async function PATCH(request: Request) {
     href?: string;
     image?: string;
     status?: string;
+    socials?: { kind?: string; href?: string }[];
   } | null;
   if (!body?.id) return Response.json({ error: 'Missing project.' }, { status: 400 });
   const parsed = readProject(body);

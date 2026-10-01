@@ -42,6 +42,9 @@ export default function AdminPage() {
   const [summary, setSummary] = useState('');
   const [href, setHref] = useState('');
   const [image, setImage] = useState('');
+  const [linkedin, setLinkedin] = useState('');
+  const [x, setX] = useState('');
+  const [telegram, setTelegram] = useState('');
   const [status, setStatus] = useState<'building' | 'live'>('building');
   const [message, setMessage] = useState('');
   const [pending, setPending] = useState(false);
@@ -72,6 +75,9 @@ export default function AdminPage() {
     setSummary('');
     setHref('');
     setImage('');
+    setLinkedin('');
+    setX('');
+    setTelegram('');
     setStatus('building');
   }
 
@@ -82,6 +88,9 @@ export default function AdminPage() {
     setSummary(project.summary);
     setHref(project.href);
     setImage(project.image);
+    setLinkedin(project.socials.find((social) => social.kind === 'linkedin')?.href ?? '');
+    setX(project.socials.find((social) => social.kind === 'x')?.href ?? '');
+    setTelegram(project.socials.find((social) => social.kind === 'telegram')?.href ?? '');
     setStatus(project.status);
     setMessage('');
   }
@@ -142,7 +151,12 @@ export default function AdminPage() {
     event.preventDefault();
     setPending(true);
     setMessage('');
-    const payload = { id: editingId, name, tagline, summary, href, image, status };
+    const socials = [
+      { kind: 'linkedin', href: linkedin.trim() },
+      { kind: 'x', href: x.trim() },
+      { kind: 'telegram', href: telegram.trim() },
+    ].filter((social) => social.href);
+    const payload = { id: editingId, name, tagline, summary, href, image, status, socials };
     const response = await fetch('/api/admin/projects', {
       method: editingId ? 'PATCH' : 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -278,6 +292,29 @@ export default function AdminPage() {
                     <option value="building">Building</option>
                     <option value="live">Live</option>
                   </select>
+                </label>
+                <p className="field">Socials</p>
+                <label className="field">
+                  LinkedIn
+                  <input
+                    type="url"
+                    placeholder="https://"
+                    value={linkedin}
+                    onChange={(event) => setLinkedin(event.target.value)}
+                  />
+                </label>
+                <label className="field">
+                  X
+                  <input type="url" placeholder="https://" value={x} onChange={(event) => setX(event.target.value)} />
+                </label>
+                <label className="field">
+                  Telegram
+                  <input
+                    type="url"
+                    placeholder="https://"
+                    value={telegram}
+                    onChange={(event) => setTelegram(event.target.value)}
+                  />
                 </label>
                 <div className="admin-form-actions">
                   <button className="btn btn-primary" type="submit" disabled={pending}>

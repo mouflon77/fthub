@@ -2,8 +2,14 @@ import { randomUUID } from 'crypto';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { unstable_noStore as noStore } from 'next/cache';
+import type { SocialKind } from '@/lib/site';
 
 export type ProjectStatus = 'building' | 'live';
+
+export type ProjectSocial = {
+  kind: SocialKind;
+  href: string;
+};
 
 export type Project = {
   id: string;
@@ -13,6 +19,7 @@ export type Project = {
   href: string;
   image: string;
   status: ProjectStatus;
+  socials: ProjectSocial[];
   createdAt: string;
 };
 
@@ -93,6 +100,7 @@ function normalizeProject(project: Project): Project {
     tagline: project.tagline ?? '',
     image: project.image ?? '',
     href: project.href ?? '',
+    socials: Array.isArray(project.socials) ? project.socials : [],
   };
 }
 

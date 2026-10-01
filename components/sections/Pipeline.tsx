@@ -1,4 +1,6 @@
 import { listProjects, type Project } from '@/lib/admin/store';
+import { SocialLinks } from '@/components/ui/SocialLinks';
+import type { SocialLink } from '@/lib/site';
 
 function hostOf(href: string) {
   try {
@@ -8,8 +10,18 @@ function hostOf(href: string) {
   }
 }
 
+function socialLinks(project: Project): SocialLink[] {
+  const names = { linkedin: 'LinkedIn', x: 'X', telegram: 'Telegram' } as const;
+  return project.socials.map((social) => ({
+    kind: social.kind,
+    href: social.href,
+    label: `${project.name} on ${names[social.kind]}`,
+  }));
+}
+
 function ProjectCard({ project }: { project: Project }) {
   const host = hostOf(project.href);
+  const socials = socialLinks(project);
 
   return (
     <article className="product pipeline-product glass">
@@ -25,14 +37,17 @@ function ProjectCard({ project }: { project: Project }) {
         </div>
         {project.tagline ? <p className="product-tagline">{project.tagline}</p> : null}
         <p className="product-copy">{project.summary}</p>
-        {project.href ? (
+        {project.href || socials.length ? (
           <div className="product-foot">
-            <a className="btn btn-primary" href={project.href} target="_blank" rel="noreferrer noopener">
-              Visit {project.name}
-              <span className="btn-chip" aria-hidden="true">
-                →
-              </span>
-            </a>
+            <SocialLinks links={socials} />
+            {project.href ? (
+              <a className="btn btn-primary" href={project.href} target="_blank" rel="noreferrer noopener">
+                Visit {project.name}
+                <span className="btn-chip" aria-hidden="true">
+                  →
+                </span>
+              </a>
+            ) : null}
           </div>
         ) : null}
       </div>
