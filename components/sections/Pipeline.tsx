@@ -1,58 +1,17 @@
 import { listProjects, type Project } from '@/lib/admin/store';
-import { SocialLinks } from '@/components/ui/SocialLinks';
 import type { SocialLink } from '@/lib/site';
-
-function hostOf(href: string) {
-  try {
-    return new URL(href).host.replace(/^www\./, '');
-  } catch {
-    return '';
-  }
-}
+import { ProductCard } from './ProductCard';
+import { ProjectVisual } from './ProductVisuals';
 
 function socialLinks(project: Project): SocialLink[] {
   const names = { linkedin: 'LinkedIn', x: 'X', telegram: 'Telegram' } as const;
-  return project.socials.map((social) => ({
-    kind: social.kind,
-    href: social.href,
-    label: `${project.name} on ${names[social.kind]}`,
-  }));
-}
-
-function ProjectCard({ project }: { project: Project }) {
-  const host = hostOf(project.href);
-  const socials = socialLinks(project);
-
-  return (
-    <article className="product pipeline-product glass">
-      <div className="product-visual">
-        {project.image ? <img className="product-shot" src={project.image} alt={`${project.name} site`} /> : null}
-        <span className="product-tag">{project.status === 'live' ? 'Live' : 'Building'}</span>
-      </div>
-
-      <div className="product-body">
-        <div className="product-title">
-          <h3>{project.name}</h3>
-          {host ? <span className="product-host">{host}</span> : null}
-        </div>
-        {project.tagline ? <p className="product-tagline">{project.tagline}</p> : null}
-        <p className="product-copy">{project.summary}</p>
-        {project.href || socials.length ? (
-          <div className="product-foot">
-            <SocialLinks links={socials} />
-            {project.href ? (
-              <a className="btn btn-primary" href={project.href} target="_blank" rel="noreferrer noopener">
-                Visit {project.name}
-                <span className="btn-chip" aria-hidden="true">
-                  →
-                </span>
-              </a>
-            ) : null}
-          </div>
-        ) : null}
-      </div>
-    </article>
-  );
+  return project.socials
+    .filter((social) => social.href)
+    .map((social) => ({
+      kind: social.kind,
+      href: social.href,
+      label: `${project.name} on ${names[social.kind]}`,
+    }));
 }
 
 export async function Pipeline() {
@@ -65,10 +24,20 @@ export async function Pipeline() {
   if (projects.length === 0) return null;
 
   return (
-    <div className="pipeline">
+    <>
       {projects.map((project) => (
-        <ProjectCard key={project.id} project={project} />
+        <ProductCard
+          key={project.id}
+          status={project.status === 'live' ? 'Live product' : 'In development'}
+          name={project.name}
+          claim={project.tagline}
+          body={project.summary}
+          href={project.href}
+          cta={project.href ? `Explore ${project.name}` : undefined}
+          socials={socialLinks(project)}
+          visual={<ProjectVisual name={project.name} tagline={project.tagline} image={project.image} />}
+        />
       ))}
-    </div>
+    </>
   );
 }

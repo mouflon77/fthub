@@ -2,11 +2,11 @@ import { Header } from '@/components/ui/Header';
 import { Footer } from '@/components/ui/Footer';
 import { Hero } from '@/components/sections/Hero';
 import { Work } from '@/components/sections/Work';
+import { Coming } from '@/components/sections/Coming';
+import { Services } from '@/components/sections/Services';
 import { About } from '@/components/sections/About';
-import { LookFor } from '@/components/sections/LookFor';
-import { HowWeWork } from '@/components/sections/HowWeWork';
-import { Lab } from '@/components/sections/Lab';
-import { Advisory } from '@/components/sections/Advisory';
+import { Process } from '@/components/sections/Process';
+import { Business } from '@/components/sections/Business';
 import { Contact } from '@/components/sections/Contact';
 import { contact, site, work } from '@/lib/site';
 
@@ -17,21 +17,19 @@ const schema = {
   url: site.url,
   slogan: site.tagline,
   description: site.description,
-  address: { '@type': 'PostalAddress', addressLocality: 'London', addressCountry: 'GB' },
+  email: site.email,
   sameAs: contact.links.map((link) => link.href),
-  owns: [
-    {
-      '@type': 'WebSite',
-      name: work.product.name,
-      url: work.product.href,
-    },
-  ],
+  owns: work.products.map((product) => ({
+    '@type': 'WebSite',
+    name: product.name,
+    url: product.href,
+  })),
 };
 
 export default function Page() {
   return (
     <>
-      <a className="skip" href="#work">
+      <a className="skip" href="#products">
         Skip to content
       </a>
 
@@ -40,11 +38,11 @@ export default function Page() {
       <main className="page" id="top">
         <Hero />
         <Work />
+        <Coming />
+        <Services />
         <About />
-        <LookFor />
-        <HowWeWork />
-        <Lab />
-        <Advisory />
+        <Process />
+        <Business />
         <Contact />
         <Footer />
       </main>
