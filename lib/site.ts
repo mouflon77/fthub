@@ -137,7 +137,7 @@ export const about = {
     },
     {
       title: 'AI-native approach',
-      body: 'We use AI in how we design, develop and evolve products — not just as an add-on.',
+      body: 'We use AI in how we design, develop and evolve products, not just as an add-on.',
     },
   ],
 } as const;
@@ -147,10 +147,10 @@ export const process = {
   heading: 'From idea to launch.',
   lede: 'A practical process built to turn promising concepts into software people can actually use.',
   steps: [
-    { title: '01 — Discover', body: 'Understand the challenge, the audience and the opportunity.' },
-    { title: '02 — Design', body: 'Define the product, the user experience and delivery priorities.' },
-    { title: '03 — Build', body: 'Develop, test and iterate using modern tools and AI-powered workflows.' },
-    { title: '04 — Launch & Evolve', body: 'Release, learn from users and keep improving.' },
+    { title: '01. Discover', body: 'Understand the challenge, the audience and the opportunity.' },
+    { title: '02. Design', body: 'Define the product, the user experience and delivery priorities.' },
+    { title: '03. Build', body: 'Develop, test and iterate using modern tools and AI-powered workflows.' },
+    { title: '04. Launch & Evolve', body: 'Release, learn from users and keep improving.' },
   ],
 } as const;
 
