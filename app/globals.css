@@ -1259,6 +1259,11 @@ a {
   .section-tight {
     padding-top: 15px;
   }
+
+  .wrap {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -60,11 +60,11 @@ export const work = {
       status: 'Early access',
       name: 'Hastur',
       claim: 'Spot narratives before they become market opportunities.',
-      body: 'An AI-powered intelligence platform tracking emerging news, social trends and market sentiment, connecting narratives with memecoins and potential trading opportunities — all in one place.',
+      body: 'An AI-powered intelligence platform tracking emerging news, social trends and market sentiment, connecting narratives with memecoins and potential trading opportunities.',
       href: 'https://hastur.io/',
       cta: 'Explore Hastur',
       visual: 'hastur',
-      socials: [] satisfies SocialLink[],
+      socials: [{ kind: 'x', href: 'https://x.com/gethastur', label: 'Hastur on X' }] satisfies SocialLink[],
     },
   ],
 } as const;
